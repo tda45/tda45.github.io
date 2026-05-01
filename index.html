@@ -3,169 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tda_45 | Çok Yakında</title>
+    <title>Tda_45 | Gelişmiş Erişim</title>
     <style>
+        :root {
+            --primary: #ff1100;
+            --bg: #050505;
+        }
+
         body {
             margin: 0;
             padding: 0;
             height: 100vh;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle, #1e1e1e 0%, #0a0a0a 100%);
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
-            transition: background 0.5s;
+            cursor: none; /* Özel imleç için */
         }
 
-        /* Arka plandaki süzülen parçacıklar için */
-        #particles {
-            position: absolute;
+        /* Arka plandaki akan kodlar */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
+            opacity: 0.1;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Özel İmleç */
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
         }
 
         .container {
             position: relative;
             z-index: 10;
             text-align: center;
-            perspective: 1000px; /* 3D etkisi için */
         }
 
+        /* Glitch Efekti ve Görsel */
         #badge {
-            max-width: 85%;
-            height: auto;
-            cursor: pointer;
-            filter: drop-shadow(0 0 20px rgba(255, 17, 0, 0.2));
-            transition: transform 0.1s ease-out, filter 0.3s;
-            user-select: none;
+            max-width: 80%;
+            filter: drop-shadow(0 0 10px var(--primary));
+            animation: glitch 3s infinite;
+            cursor: none;
+            position: relative;
         }
 
-        /* Yüklenme Barı */
-        .loader-container {
-            margin-top: 30px;
-            width: 200px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            2% { transform: translate(-5px, 2px); filter: hue-rotate(90deg); }
+            4% { transform: translate(5px, -2px); filter: hue-rotate(180deg); }
+            6% { transform: translate(0); filter: none; }
+            100% { transform: translate(0); }
         }
 
-        .loader-fill {
-            width: 0%;
-            height: 100%;
-            background: #ff1100;
-            box-shadow: 0 0 10px #ff1100;
-            animation: loading 3s infinite ease-in-out;
-        }
-
-        @keyframes loading {
-            0% { width: 0%; left: 0; }
-            50% { width: 70%; }
-            100% { width: 100%; }
-        }
-
-        .status-text {
-            margin-top: 10px;
-            font-size: 12px;
-            letter-spacing: 2px;
+        /* Alt Yazı ve Terminal Efekti */
+        .terminal-text {
+            margin-top: 20px;
+            font-size: 14px;
+            letter-spacing: 3px;
+            color: var(--primary);
             text-transform: uppercase;
-            opacity: 0.6;
-            animation: pulse 2s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
+        .terminal-text::after {
+            content: "_";
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Tıklama Dalgalanması */
+        .ripple {
+            position: absolute;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: ripple-effect 0.6s linear;
+        }
+
+        @keyframes ripple-effect {
+            to { transform: scale(4); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-    <canvas id="particles"></canvas>
+    <canvas id="matrix-bg"></canvas>
+    <div id="cursor"></div>
 
-    <div class="container" id="mainContainer">
+    <div class="container">
         <img id="badge" src="https://img.shields.io/badge/%C3%87OK%20YAKINDA%20Tda_45%20Ana%20Sitesi%20A%C3%A7%C4%B1lacak-ff1100" alt="Tda_45">
-        
-        <div class="loader-container">
-            <div class="loader-fill"></div>
-        </div>
-        <div class="status-text">Sunucu Hazırlanıyor</div>
+        <div class="terminal-text" id="typewriter">Bağlantı Kuruluyor...</div>
     </div>
 
     <script>
-        const badge = document.getElementById('badge');
-        const container = document.getElementById('mainContainer');
-        const canvas = document.getElementById('particles');
+        const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
+        const cursor = document.getElementById('cursor');
+        const badge = document.getElementById('badge');
 
-        // 1. Mouse Takip Efekti (3D Tilt)
-        document.addEventListener('mousemove', (e) => {
-            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
-            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
-            badge.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
-        });
-
-        // 2. Basit Parçacık Sistemi
+        // 1. Matrix Arka Plan Efekti
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        let particlesArray = [];
+        const alphabet = "TDA45-SYSTEM-ACTIVE-LOADING-0101";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2;
-                this.speedX = Math.random() * 0.5 - 0.25;
-                this.speedY = Math.random() * 0.5 - 0.25;
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ff1100";
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
             }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                if (this.x > canvas.width) this.x = 0;
-                if (this.x < 0) this.x = canvas.width;
-                if (this.y > canvas.height) this.y = 0;
-                if (this.y < 0) this.y = canvas.height;
-            }
-            draw() {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
+        }
+        setInterval(drawMatrix, 50);
+
+        // 2. Özel İmleç Takibi
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // 3. Tipografi (Daktilo) Efekti
+        const textElement = document.getElementById('typewriter');
+        const phrases = ["Sistem Hazırlanıyor...", "Veritabanı Senkronize Ediliyor...", "Tda_45 Protokolü Beklemede..."];
+        let count = 0;
+        let charIndex = 0;
+
+        function type() {
+            if (charIndex < phrases[count].length) {
+                textElement.textContent += phrases[count].charAt(charIndex);
+                charIndex++;
+                setTimeout(type, 100);
+            } else {
+                setTimeout(erase, 2000);
             }
         }
 
-        function init() {
-            for (let i = 0; i < 50; i++) {
-                particlesArray.push(new Particle());
+        function erase() {
+            if (charIndex > 0) {
+                textElement.textContent = phrases[count].substring(0, charIndex - 1);
+                charIndex--;
+                setTimeout(erase, 50);
+            } else {
+                count = (count + 1) % phrases.length;
+                setTimeout(type, 500);
             }
         }
+        textElement.textContent = "";
+        type();
 
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particlesArray.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animate);
-        }
+        // 4. Tıklama Efekti (Görsel ve Ses)
+        badge.addEventListener('mousedown', () => {
+            cursor.style.width = '40px';
+            cursor.style.height = '40px';
+            
+            // Basit bir "bip" sesi simülasyonu
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        });
 
-        init();
-        animate();
+        badge.addEventListener('mouseup', () => {
+            cursor.style.width = '20px';
+            cursor.style.height = '20px';
+        });
 
-        // 3. Tıklama Sürprizi
-        badge.onclick = () => {
-            badge.style.filter = "brightness(2) drop-shadow(0 0 30px #ff1100)";
-            setTimeout(() => {
-                badge.style.filter = "drop-shadow(0 0 20px rgba(255, 17, 0, 0.2))";
-            }, 200);
-            console.log("Tda_45 protokolü aktif.");
-        };
-
-        // Pencere boyutu değişirse canvas'ı güncelle
         window.onresize = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
