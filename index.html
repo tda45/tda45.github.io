@@ -3,67 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tda_45 - Çok Yakında</title>
+    <title>Tda_45 | Çok Yakında</title>
     <style>
         body {
             margin: 0;
             padding: 0;
+            height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: #1a1a1a;
-            font-family: sans-serif;
+            background: radial-gradient(circle, #1e1e1e 0%, #0a0a0a 100%);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
             overflow: hidden;
+            transition: background 0.5s;
+        }
+
+        /* Arka plandaki süzülen parçacıklar için */
+        #particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            perspective: 1000px; /* 3D etkisi için */
         }
 
         #badge {
-            max-width: 90%;
+            max-width: 85%;
             height: auto;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             cursor: pointer;
-            /* İlk başta görünmez yapıyoruz (JS ile açılacak) */
-            opacity: 0;
-            transition: all 0.8s ease-in-out;
-            transform: scale(0.8);
+            filter: drop-shadow(0 0 20px rgba(255, 17, 0, 0.2));
+            transition: transform 0.1s ease-out, filter 0.3s;
+            user-select: none;
         }
 
-        /* Tıklandığında çalışacak efekt */
-        .click-effect {
-            filter: brightness(2) drop-shadow(0 0 15px #ff1100) !important;
-            transform: scale(1.1) !important;
+        /* Yüklenme Barı */
+        .loader-container {
+            margin-top: 30px;
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loader-fill {
+            width: 0%;
+            height: 100%;
+            background: #ff1100;
+            box-shadow: 0 0 10px #ff1100;
+            animation: loading 3s infinite ease-in-out;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; left: 0; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        .status-text {
+            margin-top: 10px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
         }
     </style>
 </head>
 <body>
 
-    <img id="badge" 
-         src="https://img.shields.io/badge/%C3%87OK%20YAKINDA%20Tda_45%20Ana%20Sitesi%20A%C3%A7%C4%B1lacak-ff1100" 
-         alt="Çok Yakında"
-         onclick="animateBadge()">
+    <canvas id="particles"></canvas>
+
+    <div class="container" id="mainContainer">
+        <img id="badge" src="https://img.shields.io/badge/%C3%87OK%20YAKINDA%20Tda_45%20Ana%20Sitesi%20A%C3%A7%C4%B1lacak-ff1100" alt="Tda_45">
+        
+        <div class="loader-container">
+            <div class="loader-fill"></div>
+        </div>
+        <div class="status-text">Sunucu Hazırlanıyor</div>
+    </div>
 
     <script>
-        // Sayfa açıldığında görseli otomatik olarak göster
-        const el = document.getElementById('badge');
-        
-        window.onload = function() {
-            el.style.opacity = "1";
-            el.style.transform = "scale(1)";
-            console.log("JavaScript başarıyla çalıştı!");
+        const badge = document.getElementById('badge');
+        const container = document.getElementById('mainContainer');
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+
+        // 1. Mouse Takip Efekti (3D Tilt)
+        document.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            badge.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        // 2. Basit Parçacık Sistemi
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particlesArray = [];
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            for (let i = 0; i < 50; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particlesArray.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+
+        // 3. Tıklama Sürprizi
+        badge.onclick = () => {
+            badge.style.filter = "brightness(2) drop-shadow(0 0 30px #ff1100)";
+            setTimeout(() => {
+                badge.style.filter = "drop-shadow(0 0 20px rgba(255, 17, 0, 0.2))";
+            }, 200);
+            console.log("Tda_45 protokolü aktif.");
         };
 
-        // Görsele tıklandığında çalışacak fonksiyon
-        function animateBadge() {
-            el.classList.add('click-effect');
-            
-            // 300ms sonra efekti eski haline döndür
-            setTimeout(() => {
-                el.classList.remove('click-effect');
-            }, 300);
-            
-            alert("Tda_45 Sitesi Çok Yakında Açılıyor!");
-        }
+        // Pencere boyutu değişirse canvas'ı güncelle
+        window.onresize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
     </script>
-
 </body>
 </html>
