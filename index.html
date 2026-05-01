@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tda_45 - Çok Yakında</title>
     <style>
-        /* Temel Sayfa Düzeni */
         body {
             margin: 0;
             padding: 0;
@@ -14,62 +13,56 @@
             align-items: center;
             height: 100vh;
             background-color: #1a1a1a;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
             overflow: hidden;
         }
 
-        /* Görsel Tasarımı ve Animasyonu */
-        img {
+        #badge {
             max-width: 90%;
             height: auto;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             cursor: pointer;
-            opacity: 0; /* Başlangıçta görünmez */
-            transform: translateY(20px); /* Hafif aşağıda başlar */
-            transition: opacity 1s ease, transform 1s ease, filter 0.3s;
+            /* İlk başta görünmez yapıyoruz (JS ile açılacak) */
+            opacity: 0;
+            transition: all 0.8s ease-in-out;
+            transform: scale(0.8);
         }
 
-        /* Görsel göründüğünde eklenecek sınıf */
-        .visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Tıklandığında parlama efekti */
-        .pulse {
-            filter: brightness(1.5) drop-shadow(0 0 10px #ff1100);
+        /* Tıklandığında çalışacak efekt */
+        .click-effect {
+            filter: brightness(2) drop-shadow(0 0 15px #ff1100) !important;
+            transform: scale(1.1) !important;
         }
     </style>
 </head>
 <body>
 
-    <img id="badge" src="https://img.shields.io/badge/%C3%87OK%20YAKINDA%20Tda_45%20Ana%20Sitesi%20A%C3%A7%C4%B1lacak-ff1100" alt="Çok Yakında">
+    <img id="badge" 
+         src="https://img.shields.io/badge/%C3%87OK%20YAKINDA%20Tda_45%20Ana%20Sitesi%20A%C3%A7%C4%B1lacak-ff1100" 
+         alt="Çok Yakında"
+         onclick="animateBadge()">
 
     <script>
-        // Sayfa yüklendiğinde çalışacak kodlar
-        window.addEventListener('DOMContentLoaded', () => {
-            const badge = document.getElementById('badge');
+        // Sayfa açıldığında görseli otomatik olarak göster
+        const el = document.getElementById('badge');
+        
+        window.onload = function() {
+            el.style.opacity = "1";
+            el.style.transform = "scale(1)";
+            console.log("JavaScript başarıyla çalıştı!");
+        };
 
-            // 1. Giriş animasyonunu tetikle
+        // Görsele tıklandığında çalışacak fonksiyon
+        function animateBadge() {
+            el.classList.add('click-effect');
+            
+            // 300ms sonra efekti eski haline döndür
             setTimeout(() => {
-                badge.classList.add('visible');
+                el.classList.remove('click-effect');
             }, 300);
-
-            // 2. Tıklama efekti ekle
-            badge.addEventListener('click', () => {
-                badge.classList.add('pulse');
-                
-                // 500ms sonra efekti kaldır
-                setTimeout(() => {
-                    badge.classList.remove('pulse');
-                }, 500);
-
-                console.log("Tda_45: Yakında görüşürüz!");
-            });
-
-            // 3. Konsola teknik bir not bırakalım
-            console.log("%c Tda_45 %c Sistem Hazırlanıyor... ", "color: white; background: #ff1100; font-weight: bold;", "color: #ff1100;");
-        });
+            
+            alert("Tda_45 Sitesi Çok Yakında Açılıyor!");
+        }
     </script>
 
 </body>
