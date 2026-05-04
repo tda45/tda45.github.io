@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Runner - tda_45</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Offline fallback font */
+        @font-face {
+            font-family: 'Inter';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Arial'), local('Helvetica'), local('sans-serif');
+        }
+    </style>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0505 100%);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent-red);
+        }
+
+        .game-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .stat-item {
+            background: rgba(139, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--primary-red);
+        }
+
+        #gameCanvas {
+            border: 2px solid var(--primary-red);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
+            background: #000;
+        }
+
+        .game-controls {
+            margin-top: 20px;
+            text-align: center;
+            color: var(--text-gray);
+        }
+
+        .control-btn {
+            background: rgba(139, 0, 0, 0.3);
+            color: var(--accent-red);
+            border: 1px solid var(--primary-red);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+
+        .control-btn:hover {
+            background: rgba(139, 0, 0, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.3);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--primary-red);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            color: var(--text-light);
+            display: none;
+        }
+
+        .game-over h2 {
+            color: var(--accent-red);
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--text-gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--accent-red);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-header h1 {
+                font-size: 2rem;
+            }
+            
+            .game-stats {
+                gap: 15px;
+                font-size: 1rem;
+            }
+            
+            .stat-item {
+                padding: 8px 15px;
+            }
+            
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Ana Sayfaya Dön</a>
+    
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🔴 Red Runner</h1>
+            <p>Boşluk tuşu ile zıpla! Engelere çarpmaktan kaçın!</p>
+        </div>
+        
+        <div class="game-stats">
+            <div class="stat-item">Skor: <span id="score">0</span></div>
+            <div class="stat-item">En Yüksek: <span id="highScore">0</span></div>
+            <div class="stat-item">Hız: <span id="speed">1.0</span>x</div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        
+        <div class="game-controls">
+            <button class="control-btn" id="startBtn">Oyunu Başlat</button>
+            <button class="control-btn" id="pauseBtn">Durdur</button>
+            <button class="control-btn" id="resetBtn">Sıfırla</button>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            <h2>Oyun Bitti!</h2>
+            <p>Skorunuz: <span id="finalScore">0</span></p>
+            <button class="control-btn" id="restartBtn">Tekrar Oyna</button>
+        </div>
+    </div>
+
+    <script>
+        // Add achievement styles to oyun.html
+        const achievementStyles = document.createElement('style');
+        achievementStyles.textContent = `
+            /* Achievement Panel Styles */
+            #achievement-panel {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 100;
+            }
+
+            .achievement-toggle {
+                background: rgba(255, 215, 0, 0.2);
+                color: #ffd700;
+                padding: 10px 15px;
+                border-radius: 8px;
+                border: 1px solid #ffd700;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.9rem;
+                transition: all 0.3s ease;
+            }
+
+            .achievement-toggle:hover {
+                background: rgba(255, 215, 0, 0.4);
+                transform: translateY(-2px);
+            }
+
+            .achievement-list {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background: rgba(0, 0, 0, 0.95);
+                border: 1px solid #ffd700;
+                border-radius: 10px;
+                padding: 10px;
+                min-width: 300px;
+                max-height: 400px;
+                overflow-y: auto;
+                margin-top: 5px;
+            }
+
+            .achievement-item {
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                margin-bottom: 5px;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+            }
+
+            .achievement-item.unlocked {
+                background: rgba(255, 215, 0, 0.1);
+                border: 1px solid rgba(255, 215, 0, 0.3);
+            }
+
+            .achievement-item.locked {
+                background: rgba(128, 128, 128, 0.1);
+                border: 1px solid rgba(128, 128, 128, 0.3);
+                opacity: 0.7;
+            }
+
+            .achievement-icon {
+                font-size: 1.5rem;
+                margin-right: 10px;
+                width: 30px;
+                text-align: center;
+            }
+
+            .achievement-info {
+                flex: 1;
+            }
+
+            .achievement-name {
+                font-weight: 600;
+                color: #ffffff;
+                margin-bottom: 2px;
+            }
+
+            .achievement-description {
+                font-size: 0.8rem;
+                color: #cccccc;
+            }
+
+            .achievement-status {
+                font-size: 1.2rem;
+                margin-left: 10px;
+            }
+
+            /* Achievement Notification */
+            .achievement-notification {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.8);
+                background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+                border: 2px solid #ffd700;
+                border-radius: 15px;
+                padding: 20px;
+                z-index: 1000;
+                opacity: 0;
+                transition: all 0.3s ease;
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            }
+
+            .achievement-notification.show {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            .achievement-content {
+                display: flex;
+                align-items: center;
+                color: #ffffff;
+            }
+
+            .achievement-title {
+                font-size: 1.2rem;
+                font-weight: 700;
+                margin-bottom: 5px;
+                color: #ffd700;
+            }
+
+            .achievement-name {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 3px;
+            }
+
+            .achievement-description {
+                font-size: 0.9rem;
+                opacity: 0.9;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                #achievement-panel {
+                    top: auto;
+                    bottom: 20px;
+                    right: 10px;
+                }
+
+                .achievement-list {
+                    max-height: 300px;
+                    min-width: 250px;
+                }
+            }
+        `;
+        document.head.appendChild(achievementStyles);
+    </script>
+    <script src="game.js"></script>
+</body>
+</html>
